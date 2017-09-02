@@ -6,7 +6,8 @@ import json
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-
+commentsURL = 'http://comment5.news.sina.com.cn/page/info?version=1&format=js&channel=gn&newsid=comos-{}' \
+              '&group=&compress=0&ie=utf-8&oe=utf-8&page=1&page_size=20'
 # Get website url
 
 
@@ -16,6 +17,8 @@ def get_url(url):
     html_sample = res.text
     soup = BeautifulSoup(html_sample,'html.parser')
     return soup
+
+# Get news content
 
 
 def get_content(url):
@@ -27,36 +30,67 @@ def get_content(url):
             a = news.select('a')[0]['href']
             return time, h2, a
 
+# Get news title
+
 
 def get_title(url):
     soup = get_url(url)
     title = soup.select('#artibodyTitle')[0].text
     return title
+# Get news source and time
 
 
-def get_source(url):
+def get_source_time(url):
     soup = get_url(url)
     time_source = soup.select('.time-source')[0].contents[0].strip()
-    dt = datetime.strptime(time_source.encode('utf-8'), '%Y年%m月%d日%H:%M')
+    # dt = datetime.strptime(time_source.encode('utf-8'), '%Y年%m月%d日%H:%M')
+    return time_source
+
+
+def get_source_news(url):
+    soup = get_url(url)
     source = soup.select('.time-source span a')[0].text
-    return dt, source
+    return source
 
 
-commentsURL = 'http://comment5.news.sina.com.cn/page/info?version=1&format=js&channel=gn&newsid=comos-fykpzey3694410&group=&compress=0&ie=utf-8&oe=utf-8&page=1&page_size=20'
+def get_editor_name(url):
+    soup = get_url(url)
+    editor = soup.select('.article-editor')[0].text.encode('utf-8').strip('责任编辑：')
+    return editor
+
+# Get total comments for the news
 
 
 def get_comments(newsurl):
     news = re.search('doc-i(.+).shtml', newsurl)
     newsid = news.group(1)
-    print newsid
     comment = requests.get(commentsURL.format(newsid))
-    print comment
     result = json.loads(comment.text.strip('var data='))
     total_comments = result['result']['count']['total']
-    print total_comments
+    return total_comments
 
-get_content('http://news.sina.com.cn/china/')
-get_title('http://news.sina.com.cn/c/gat/2017-09-01/doc-ifykpzey3694410.shtml')
-get_title('http://news.sina.com.cn/o/2017-09-01/doc-ifykpuui0344931.shtml')
-get_source('http://news.sina.com.cn/c/gat/2017-09-01/doc-ifykpzey3694410.shtml')
-get_comments('http://news.sina.com.cn/c/nd/2017-09-01/doc-ifykpuui0320241.shtml')
+
+# Put all those collected information into a dic
+
+
+def get_news_detail(url):
+    details = {}
+    title = get_title(url)
+    time = get_source_time(url)
+    source = get_source_news(url)
+    editor = get_editor_name(url)
+    comments = get_comments(url)
+
+    details['news title'] = title
+    details['time'] = time
+    details['source'] = source
+    details['editor'] = editor
+    details['total comments'] = comments
+
+    final_result = json.dumps(details,encoding="UTF-8", ensure_ascii=False, sort_keys=False, indent=4)
+
+    print final_result
+
+
+
+get_news_detail('http://news.sina.com.cn/c/nd/2017-09-03/doc-ifykpzey3934829.shtml')
