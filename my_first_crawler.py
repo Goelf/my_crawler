@@ -21,8 +21,8 @@ def get_url(url):
 # Get news content
 
 
-def get_content(url):
-    soup = get_url(url)
+def get_content(weburl):
+    soup = get_url(weburl)
     for news in soup.select('.news-item'):
         if len(news.select('h2')) > 0:
             h2 = news.select('h2')[0].text
@@ -37,6 +37,12 @@ def get_title(url):
     soup = get_url(url)
     title = soup.select('#artibodyTitle')[0].text
     return title
+
+
+def get_article(url):
+    soup = get_url(url)
+    article = ''.join([p.text.strip() for p in soup.select('#artibody p')[:-1]])
+    return article
 # Get news source and time
 
 
@@ -70,18 +76,19 @@ def get_comments(newsurl):
     return total_comments
 
 
-# Put all those collected information into a dic
-
+# Put all those collected information into a dict
 
 def get_news_detail(url):
     details = {}
     title = get_title(url)
+    article = get_article(url)
     time = get_source_time(url)
     source = get_source_news(url)
     editor = get_editor_name(url)
     comments = get_comments(url)
 
     details['news title'] = title
+    details['article'] = article
     details['time'] = time
     details['source'] = source
     details['editor'] = editor
@@ -93,4 +100,6 @@ def get_news_detail(url):
 
 
 
-get_news_detail('http://news.sina.com.cn/c/nd/2017-09-03/doc-ifykpzey3934829.shtml')
+get_news_detail('http://news.sina.com.cn/c/nd/2017-09-03/doc-ifykqmrv8359781.shtml')
+get_article('http://news.sina.com.cn/c/nd/2017-09-03/doc-ifykqmrv8359781.shtml')
+
